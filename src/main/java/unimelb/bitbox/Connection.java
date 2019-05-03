@@ -93,12 +93,12 @@ public class Connection implements Runnable {
                 data = inreader.readLine();
                 if (data != null) {
                     System.out.println(data);
-                    tasks.add(data);
-                    while (!tasks.isEmpty()) {
-                        String task = tasks.poll();
+                   tasks.add(data);
+                   while (!tasks.isEmpty()) {
+                       String task = tasks.poll();
                         Processing processing = new Processing(this, task);
                         ProcessingPool.execute(processing);
-                    }
+                   }
                 }
             } catch (IOException e1) {
                 e1.printStackTrace();
