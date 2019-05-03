@@ -94,13 +94,15 @@ public class Connection implements Runnable {
                 if (data != null) {
                     System.out.println(data);
                    tasks.add(data);
+                    ProcessingPool.wait(100);
                    while (!tasks.isEmpty()) {
                        String task = tasks.poll();
                         Processing processing = new Processing(this, task);
                         ProcessingPool.execute(processing);
+                       ProcessingPool.wait(100);
                    }
                 }
-            } catch (IOException e1) {
+            } catch (IOException | InterruptedException e1) {
                 e1.printStackTrace();
             }
         }
