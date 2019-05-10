@@ -20,8 +20,8 @@ public class Peer
 
 
     private static Logger log = Logger.getLogger(Peer.class.getName());
-    private static final int maximumConnections= Integer.parseInt(Configuration.getConfigurationValue("maximumIncommingConnections"));
-    private static final int synxInterval = Integer.parseInt(Configuration.getConfigurationValue("syncInterval"));
+    private static  int maximumConnections= Integer.parseInt(Configuration.getConfigurationValue("maximumIncommingConnections"));
+    private static  int synxInterval = Integer.parseInt(Configuration.getConfigurationValue("syncInterval"));
 
 
 

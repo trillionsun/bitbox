@@ -396,7 +396,7 @@ public class FileSystemManager extends Thread {
 			String fullPathName=root+FileSystems.getDefault().getSeparator()+pathName;
 			if(watchedFiles.containsKey(fullPathName)) return false;
 			if(loadingFiles.containsKey(fullPathName)) return false;
-			loadingFiles.put(fullPathName, new FileLoader(fullPathName,md5,length,lastModified));
+  			loadingFiles.put(fullPathName, new FileLoader(fullPathName,md5,length,lastModified));
 		}
 		return true;
 	}

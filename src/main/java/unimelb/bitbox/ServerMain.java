@@ -1,6 +1,7 @@
 package unimelb.bitbox;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -31,12 +32,12 @@ public class ServerMain implements FileSystemObserver {
 		Integer interval = Integer.parseInt(Configuration.getConfigurationValue("syncInterval"));
 		while (!ConnectionHost.getConnectedPeers().isEmpty()) {
 			try {
-				Thread.sleep(interval * 1000);
 				ArrayList<FileSystemEvent> pathevents = new ArrayList<FileSystemEvent>();
 				pathevents = fileSystemManager.generateSyncEvents();
 				for (FileSystemEvent e : pathevents) {
 					processFileSystemEvent(e);
 				}
+				Thread.sleep(interval * 1000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -227,6 +228,7 @@ public class ServerMain implements FileSystemObserver {
 			if (fileSystemManager.fileNameExists(name)) {
 				if (fileSystemManager.deleteFile(name, lm, md5)) {
 					json.put("message", "file deleted");
+					fileSystemManager.cancelFileLoader(name);
 					ready = true;
 				} else {
 					json.put("message", "there was a problem deleting the file");
@@ -247,8 +249,36 @@ public class ServerMain implements FileSystemObserver {
 	public JSONObject fileBytesRequest(JSONObject response) {
 		JSONObject json = new JSONObject();
 		String pathName = response.get("pathName").toString();
+		System.out.println(pathName);
 
 		// check shortcut before sending request
+		JSONObject initialDes_ = (JSONObject) response.get("fileDescriptor");
+		String fs__ = initialDes_.get("fileSize").toString();
+		Integer fs___ = Integer.parseInt(fs__);
+
+		Integer threads = ManagementFactory.getThreadMXBean().getThreadCount();
+		Boolean sleep = true;
+
+		//if there is only one file transferring, the threads do not need to wait
+		// sleep is going to mitigate conjunction
+		if (threads < 13) {
+			sleep = false;
+		}
+
+		// max sleep duration = 55 seconds
+		// the waiting time can not be more than 60 seconds
+		// because the sync period is 60s
+		if (sleep) {
+			try {
+				if (fs___ / 6 > 55000) {
+					fs___ = 6 * 55000;
+				}
+				Thread.sleep(fs___ / 6);
+			} catch (InterruptedException e2) {
+				e2.printStackTrace();
+			}
+		}
+
 		Boolean shortcut = false;
 		try {
 			shortcut = fileSystemManager.checkShortcut(pathName);

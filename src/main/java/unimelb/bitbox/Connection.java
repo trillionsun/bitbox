@@ -9,6 +9,7 @@ import java.io.*;
 import java.net.Socket;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -88,11 +89,12 @@ public class Connection implements Runnable {
         String data = null; // read a line of data from the stream
         JSONObject inComingPeer;
         LinkedList<String> tasks = new LinkedList<String>();
+
         while (flag) {
             try {
                 data = inreader.readLine();
                 if (data != null) {
-                    System.out.println(data);
+                    // System.out.println(data);
                    tasks.add(data);
 
                    while (!tasks.isEmpty()) {
@@ -257,20 +259,9 @@ class Processing implements Runnable {
             }
 
             case "FILE_BYTES_RESPONSE": {
-                System.out.println("FILE_BYTES_RESPONSE received from " + c.ConnectingPeer);
-                if (json.get("status").toString() == "true") {
-                    JSONObject byteRequest = ConnectionHost.fileOperator.fileBytesRequest(json);
-                    if (byteRequest.get("command") == null) {
-                        System.out.println("file writing is finished.");
-                    } else {
-                        try {
-                            c.sendJson(byteRequest);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        System.out.println("FILE_BYTES_REQUEST sended.");
-                    }
-                }
+                byteProcessing b= new byteProcessing(json, c);
+               Thread bThread = new Thread(b);
+               bThread.start();
                 break;
             }
 
@@ -293,6 +284,7 @@ class Processing implements Runnable {
                 break;
             }
             case "FILE_DELETE_RESPONSE": {
+
                 System.out.println("FILE_DELETE_RESPONSE received from " + c.ConnectingPeer);
                 break;
 
@@ -410,4 +402,34 @@ class Processing implements Runnable {
 
     }
 
+}
+
+
+class byteProcessing implements Runnable{
+     JSONObject json;
+     Connection c;
+
+    public byteProcessing(JSONObject json, Connection c)
+    {
+        this.json= json;
+        this.c=c;
+    }
+    @Override
+    public void run() {
+        System.out.println("FILE_BYTES_RESPONSE received from " + c.ConnectingPeer);
+        if (json.get("status").toString() == "true") {
+            JSONObject byteRequest = ConnectionHost.fileOperator.fileBytesRequest(json);
+            if (byteRequest.get("command") == null) {
+                System.out.println("file writing is finished.");
+            } else {
+                try {
+                    c.sendJson(byteRequest);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("FILE_BYTES_REQUEST sended.");
+            }
+        }
+
+    }
 }
