@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-// need to unify the value of ConnectionList and ConnectedPeers
 
 public class ConnectionHost implements Runnable {
     Boolean flag = true;
@@ -99,7 +98,6 @@ public class ConnectionHost implements Runnable {
         ConnectedPeers = new ArrayList<>();
         maximumConnections=peer.getMaximumConnections();
         try{
-
             serverSide = new ServerSide(peer);
             clientSide = new ClientSide(peer);
             Thread serverThread = new Thread(serverSide);
@@ -132,6 +130,10 @@ public class ConnectionHost implements Runnable {
 
     public void run() {
         while (flag) {
+
+
+
+
 
         }
     }

@@ -6,12 +6,20 @@ import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 
 import java.io.*;
-import java.net.Socket;
+import java.net.*;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+
+
+
+
+
+
+
 
 // store and implement the basic functions for each connection
 public class Connection implements Runnable {
@@ -89,7 +97,6 @@ public class Connection implements Runnable {
         String data = null; // read a line of data from the stream
         JSONObject inComingPeer;
         LinkedList<String> tasks = new LinkedList<String>();
-
         while (flag) {
             try {
                 data = inreader.readLine();

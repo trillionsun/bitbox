@@ -52,7 +52,7 @@ class ServerSide implements Runnable
 
 
     public void run () {
-        synchronized(this){
+       synchronized(this){
             this.runningThread = Thread.currentThread();
         }
         System.out.println("Server listening for a connection on: " + hostingPort);
