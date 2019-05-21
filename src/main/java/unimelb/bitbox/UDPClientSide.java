@@ -141,6 +141,9 @@ class ClientListener implements Runnable {
                 UDPProcessing handler = new UDPProcessing(response.getAddress(),response.getPort(),response.getData(), clientSocket);
                 Thread handleThread = new Thread(handler);
                 handleThread.start();
+                byte[] zero = new byte[Integer.parseInt(Configuration.getConfigurationValue("blockSize"))];
+                response.setData(zero);
+
             } catch (SocketTimeoutException a) {
                 if(!IfReceive && count <= Maxcount) {
                     try {
