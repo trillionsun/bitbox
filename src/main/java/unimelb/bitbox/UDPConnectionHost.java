@@ -85,7 +85,7 @@ public class UDPConnectionHost implements Runnable {
 
 
     public UDPConnectionHost(Peer peer) throws IOException, NoSuchAlgorithmException {
-        fileOperator = new ServerMain();
+        fileOperator = new ServerMain("udp");
         ServerConnectionList = new ArrayList<>();
         ClientConnectionList = new ArrayList<>();
         ConnectionMap = new HashMap<>();

@@ -10,9 +10,10 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
-public class UDPProcessing implements  Runnable {
+public class UDPProcessing implements Runnable {
     String message;
     String task;
     Boolean HandShakeFlag = false;
@@ -24,23 +25,20 @@ public class UDPProcessing implements  Runnable {
     DatagramSocket hostingSocket;
 
     // for operation
-    DatagramPacket  incomingPacket;
+    DatagramPacket incomingPacket;
     InetAddress address;
     int port;
 
     JSONObject incomingPeer;
 
-    public static byte[] trim(byte[] bytes)
-    {
+    public static byte[] trim(byte[] bytes) {
         int i = 0;
-        while (i <= bytes.length-1 && bytes[i] != 0)
-        {
+        while (i <= bytes.length - 1 && bytes[i] != 0) {
             ++i;
         }
 
         return Arrays.copyOf(bytes, i);
     }
-
 
     public void UDPsendJson(JSONObject json) throws IOException {
         byte[] data = json.toJSONString().getBytes();
@@ -75,7 +73,6 @@ public class UDPProcessing implements  Runnable {
         this.hostingSocket.send(packet);
     }
 
-
     public void UDPclose() {
         new Thread() {
             public void run() {
@@ -86,18 +83,15 @@ public class UDPProcessing implements  Runnable {
         }.start();
     }
 
-
-    public UDPProcessing(  InetAddress IncomingAddress, int incomingPort, byte[] data, DatagramSocket host) {
+    public UDPProcessing(InetAddress IncomingAddress, int incomingPort, byte[] data, DatagramSocket host) {
         buffer = new byte[Integer.parseInt(Configuration.getConfigurationValue("blockSize"))];
         hostingSocket = host;
         buffer = data;
         message = new String(trim(buffer));
         this.address = IncomingAddress;
         this.port = incomingPort;
-        for (UDPConnection c: UDPConnectionHost.getConnectionMap().values())
-        {
-            if(c.getPort()==this.port)
-            {
+        for (UDPConnection c : UDPConnectionHost.getConnectionMap().values()) {
+            if (c.getPort() == this.port) {
                 HandShakeFlag = true;
                 break;
             }
@@ -132,7 +126,6 @@ public class UDPProcessing implements  Runnable {
             }
         }
 
-
         // protocol operation
         if (command.equals("HANDSHAKE_REQUEST") && !HandShakeFlag) {
             inComingPeer = (JSONObject) json.get("hostPort");
@@ -159,7 +152,7 @@ public class UDPProcessing implements  Runnable {
                     UDPConnectionHost.AddConnectedPeers(inComingPeer, c);
 
                     // !!!!sync methods , needed to be updated
-//                        UDPConnectionHost.fileOperator.getSync();
+                    // UDPConnectionHost.fileOperator.getSync();
 
                 } else {
                     try {
@@ -177,52 +170,185 @@ public class UDPProcessing implements  Runnable {
                 this.incomingPeer = inComingPeer;
                 UDPConnectionHost.AddConnectedPeers(inComingPeer, c);
                 UDPConnectionHost.AddClientConnectionList(c);
-                System.out.println("connection from the " +inComingPeer+ "is established.");
-                //              UDPConnectionHost.fileOperator.getSync();
+                System.out.println("connection from the " + inComingPeer + "is established.");
+                // UDPConnectionHost.fileOperator.getSync();
             }
         } else if (command.equals("INVALID_PROTOCOL")) {
             System.out.println("connection been refused by protocol problems.");
         } else if (command.equals("CONNECTION_REFUSED")) {
             System.out.println("connection been refused by incoming limit.");
         } else {
-            if (HandShakeFlag)
-            {
+            if (HandShakeFlag) {
                 if (command.equals("FILE_CREATE_REQUEST")) {
                     System.out.println("FILE_CREATE_REQUEST received from " + this.incomingPeer);
-                    //   1. the wait and retransmist.  2. replicated message
+                    // 1. the wait and retransmist. 2. replicated message
 
                 } else if (command.equals("FILE_CREATE_RESPONSE")) {
+                    System.out.println("FILE_CREATE_REQUEST received.");
+                    // 1. the wait and retransmist. 2. replicated message
 
+                    JSONObject response = null;
+                    try {
+                        response = UDPConnectionHost.fileOperator.fileCreateResponse(json);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (response.get("status").equals("true")) {
+                        try {
+                            UDPsendJson(response);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                        JSONObject byteRequest = UDPConnectionHost.fileOperator.fileBytesRequest(response);
+                        // if the file loader is ready, ask for file bytes
+                        if (byteRequest.get("command") == null) {
+                            System.out.println("file writing is finished.");
+                        } else {
+                            try {
+                                UDPsendJson(byteRequest);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("FILE_BYTES_REQUEST sended.");
+                        }
+                    }
+
+                } else if (command.equals("FILE_CREATE_RESPONSE")) {
+                    System.out.println(json.get("message").toString());
 
                 } else if (command.equals("FILE_BYTES_REQUEST")) {
-
+                    System.out.println("FILE_BYTES_REQUEST received.");
+                    JSONObject response = UDPConnectionHost.fileOperator.fileBytesResponse(json);
+                    try {
+                        UDPsendJson(response);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("FILE_BYTES_RESPONSE sended.");
 
                 } else if (command.equals("FILE_BYTES_RESPONSE")) {
-
+                    System.out.println("FILE_BYTES_RESPONSE received.");
+                    if (json.get("status").toString() == "true") {
+                        JSONObject byteRequest = UDPConnectionHost.fileOperator.fileBytesRequest(json);
+                        if (byteRequest.get("command") == null) {
+                            System.out.println("file writing is finished.");
+                        } else {
+                            try {
+                                UDPsendJson(byteRequest);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("FILE_BYTES_REQUEST sended.");
+                        }
+                    }
 
                 } else if (command.equals("FILE_DELETE_REQUEST")) {
-
+                    System.out.println("FILE_DELETE_REQUEST received.");
+                    JSONObject response = null;
+                    try {
+                        response = UDPConnectionHost.fileOperator.fileDeleteResponse(json);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        UDPsendJson(response);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("FILE_DELETE_RESPONSE sended");
 
                 } else if (command.equals("FILE_DELETE_RESPONSE")) {
-
+                    System.out.println("FILE_DELETE_RESPONSE received.");
 
                 } else if (command.equals("FILE_MODIFY_REQUEST")) {
+                    System.out.println("FILE_MODIFY_REQUEST received.");
+                    JSONObject response = null;
+                    try {
+                        response = UDPConnectionHost.fileOperator.fileModifyResponse(json);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        UDPsendJson(response);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
+                    // if the file loader is ready, ask for file bytes
+                    if (response.get("message") == "file loader ready") {
+                        JSONObject byteRequest = UDPConnectionHost.fileOperator.fileBytesRequest(response);
+                        if (byteRequest.get("command") == null) {
+                            System.out.println("file writing is finished.");
+                        } else {
+                            try {
+                                UDPsendJson(byteRequest);
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                            System.out.println("FILE_BYTES_REQUEST sended.");
+                        }
+                    }
 
                 } else if (command.equals("FILE_MODIFY_RESPONSE")) {
-
+                    System.out.println(json.get("message").toString());
 
                 } else if (command.equals("DIRECTORY_CREATE_REQUEST")) {
+                    System.out.println("DIRECTORY_CREATE_REQUEST received.");
+                    JSONObject response = null;
+                    try {
+                        response = UDPConnectionHost.fileOperator.dirCreateResponse(json);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
+                    if (response.get("status").toString() != "true") {
+                        System.out.println(response.get("message"));
+                    } else {
+                        try {
+                            UDPsendJson(response);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("DIRECTORY_CREATE_RESPONSE sended");
+                    }
 
                 } else if (command.equals("DIRECTORY_CREATE_RESPONSE")) {
-
+                    System.out.println(json.get("message").toString());
 
                 } else if (command.equals("DIRECTORY_DELETE_REQUEST")) {
+                    System.out.println("DIRECTORY_DELETE_REQUEST received.");
+                    JSONObject response = null;
+                    try {
+                        response = UDPConnectionHost.fileOperator.dirDeleteResponse(json);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
 
+                    if (response.get("status").toString() != "true") {
+                        System.out.println(response.get("message"));
+                    } else {
+                        try {
+                            UDPsendJson(response);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        System.out.println("DIRECTORY_DELETE_RESPONSE sended");
+                    }
 
                 } else if (command.equals("DIRECTORY_DELETE_RESPONSE")) {
-
+                    System.out.println("DIRECTORY_DELETE_RESPONSE received.");
 
                 } else {
                     try {
@@ -231,7 +357,7 @@ public class UDPProcessing implements  Runnable {
                         e.printStackTrace();
                     }
                 }
-            }else {
+            } else {
                 try {
                     this.UDPsend("INVALID_PROTOCOL");
                 } catch (IOException e) {
@@ -239,7 +365,8 @@ public class UDPProcessing implements  Runnable {
                 }
             }
         }
-        System.out.println(UDPConnectionHost.getServerConnectionList().size()+" incoming connections "+UDPConnectionHost.getClientConnectionList().size()+" outgoing connections");
+        System.out.println(UDPConnectionHost.getServerConnectionList().size() + " incoming connections "
+                + UDPConnectionHost.getClientConnectionList().size() + " outgoing connections");
     }
 
 }

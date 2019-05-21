@@ -22,8 +22,10 @@ import unimelb.bitbox.util.FileSystemManager.FileSystemEvent;
 public class ServerMain implements FileSystemObserver {
 	private static Logger log = Logger.getLogger(ServerMain.class.getName());
 	protected FileSystemManager fileSystemManager;
+	private String type;
 
-	public ServerMain() throws NumberFormatException, IOException, NoSuchAlgorithmException {
+	public ServerMain(String type) throws NumberFormatException, IOException, NoSuchAlgorithmException {
+		this.type = type;
 		fileSystemManager = new FileSystemManager(Configuration.getConfigurationValue("path"), this);
 	}
 
@@ -81,10 +83,18 @@ public class ServerMain implements FileSystemObserver {
 	}
 
 	public void sendToAllPeers(JSONObject json) {
-		try {
-			ConnectionHost.sendAll(json);
-		} catch (IOException e) {
-			e.printStackTrace();
+		if (this.type == "tcp") {
+			try {
+				ConnectionHost.sendAll(json);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				UDPConnectionHost.UDPsendAll(json);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 

@@ -91,7 +91,7 @@ public class ConnectionHost implements Runnable {
 
     public ConnectionHost(Peer peer) throws NumberFormatException, NoSuchAlgorithmException, IOException
     {
-        fileOperator = new ServerMain();
+        fileOperator = new ServerMain("tcp");
         ServerConnectionList= new ArrayList<>();
         ClientConnectionList = new ArrayList<>();
         ConnectionMap = new HashMap<>();
