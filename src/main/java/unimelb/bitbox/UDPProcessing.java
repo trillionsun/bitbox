@@ -88,6 +88,8 @@ public class UDPProcessing implements Runnable {
         hostingSocket = host;
         buffer = data;
         message = new String(trim(buffer));
+        System.out.print("before: ");
+        System.out.println(message);
         this.address = IncomingAddress;
         this.port = incomingPort;
         for (UDPConnection c : UDPConnectionHost.getConnectionMap().values()) {
@@ -181,10 +183,6 @@ public class UDPProcessing implements Runnable {
             if (HandShakeFlag) {
                 if (command.equals("FILE_CREATE_REQUEST")) {
                     System.out.println("FILE_CREATE_REQUEST received from " + this.incomingPeer);
-                    // 1. the wait and retransmist. 2. replicated message
-
-                } else if (command.equals("FILE_CREATE_RESPONSE")) {
-                    System.out.println("FILE_CREATE_REQUEST received.");
                     // 1. the wait and retransmist. 2. replicated message
 
                     JSONObject response = null;
