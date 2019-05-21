@@ -141,7 +141,7 @@ public class UDPProcessing implements Runnable {
                 }
                 System.out.println("replicated request!");
             } else {
-                if (UDPConnectionHost.getConnectionNum() < UDPConnectionHost.getMaximumConnections()) {
+                if (UDPConnectionHost.getServerConnectionList().size() < UDPConnectionHost.getMaximumConnections()) {
                     try {
                         this.UDPsend("HANDSHAKE_RESPONSE");
                     } catch (IOException e) {

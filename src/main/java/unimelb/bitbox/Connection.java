@@ -159,7 +159,7 @@ class Processing implements Runnable {
                 if (ConnectionHost.ClientConnectionList.contains(ConnectionHost.getConnectionMap().get(inComingPeer)))
                     c.ConnectionClose();
             } else {
-                if (ConnectionHost.getConnectionNum() <= ConnectionHost.getMaximumConnections()) {
+                if (ConnectionHost.ServerConnectionList.size() <= ConnectionHost.getMaximumConnections()) {
                     try {
                         c.send("HANDSHAKE_RESPONSE");
                         c.ConnectingPeer = inComingPeer;
