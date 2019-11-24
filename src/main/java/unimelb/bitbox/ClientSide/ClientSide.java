@@ -1,53 +1,46 @@
-package unimelb.bitbox;
+package unimelb.bitbox.ClientSide;
 
 // 2: 17 all update  change all the connected peers and peers to a <JSONObject> to avoid the format error
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
+import unimelb.bitbox.Connection.Connection;
+import unimelb.bitbox.Connection.ConnectionHost;
+import unimelb.bitbox.Peer;
 
 import java.io.*;
 import java.net.Socket;
-import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 // sending thread, needs to implement all the different commands
 
 
-
-public class ClientSide implements Runnable
-{
+public class ClientSide extends clientTask implements Runnable {
 
     private ArrayList<JSONObject> peers;
-    private  boolean flag = true;
-    private ArrayList<Connection> ClientConnectionList;
     private PrintWriter writer;
-    private BufferedReader reader;
     private int hostingPort;
 
     public ClientSide(Peer peer) {
 
-        String[]  Peers= peer.getPeers();
+        String[] Peers = peer.getPeers();
         peers = new ArrayList<>();
 
-
-        for (int i=0;i<Peers.length;i++)
-        {
+        for (int i = 0; i < Peers.length; i++) {
             String Opeer = Peers[i];
-            String [] peerHost =  Opeer.split(":",2);
-            if(peerHost[0].equals("localhost"))
-            {
-                peerHost[0]="127.0.0.1";
+            String[] peerHost = Opeer.split(":", 2);
+            // convert the unrecognized localhost
+            if (peerHost[0].equals("localhost")) {
+                peerHost[0] = "127.0.0.1";
             }
             JSONObject json = new JSONObject();
-            json.put("host",peerHost[0]);
-            json.put("port",Integer.parseInt(peerHost[1]));
+            json.put("host", peerHost[0]);
+            json.put("port", Integer.parseInt(peerHost[1]));
             peers.add(json);
         }
-        ClientConnectionList= new ArrayList<>();
         hostingPort = peer.getPortNo();
     }
+
     public static boolean hostAvailabilityCheck(String address, int port) {
         try (Socket s = new Socket(address, port)) {
             s.close();
@@ -55,13 +48,12 @@ public class ClientSide implements Runnable
         } catch (IOException ex) {
             /* ignore */
         }
-        System.out.println("Connection failed cause "+ address+" : "+ port + " not alive");
+        System.out.println("Connection failed cause " + address + " : " + port + " not alive");
         return false;
     }
 
     public void run() {
         ArrayList<JSONObject> ConnectedPeers = ConnectionHost.getConnectedPeers();
-
         for (JSONObject Opeer : peers) {
             if (!ConnectedPeers.contains(Opeer)) {
 
@@ -77,7 +69,7 @@ public class ClientSide implements Runnable
                         e.printStackTrace();
                     }
                     try {
-                        this.writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), "UTF-8"));
+                        this.writer = new PrintWriter(new OutputStreamWriter(clientSocket.getOutputStream(), StandardCharsets.UTF_8));
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -93,16 +85,10 @@ public class ClientSide implements Runnable
                     writer.println(json.toJSONString());
                     writer.flush();
                     System.out.println("send handshake request to " + Opeer);
-                    Connection c = null;
-                    try {
-                        c = ConnectionHost.ClientConnection(clientSocket);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+                    Connection c = ConnectionHost.ClientConnection(clientSocket);
                     Thread ClientConnection = new Thread(c);
                     ClientConnection.start();
                 }
-
 
             }
         }

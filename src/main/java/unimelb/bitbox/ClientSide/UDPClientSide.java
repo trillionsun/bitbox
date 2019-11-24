@@ -1,13 +1,17 @@
-package unimelb.bitbox;
+package unimelb.bitbox.ClientSide;
 
 import org.json.simple.JSONObject;
+import unimelb.bitbox.Connection.Connection;
+import unimelb.bitbox.Connection.UDPConnectionHost;
+import unimelb.bitbox.Peer;
+import unimelb.bitbox.Connection.UDPProcessing;
 import unimelb.bitbox.util.Configuration;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.ArrayList;
 
-public class UDPClientSide implements Runnable {
+public class UDPClientSide extends clientTask implements Runnable {
     private ArrayList<JSONObject> peers;
     private boolean flag = true;
     private ArrayList<Connection> ClientConnectionList;
@@ -15,8 +19,9 @@ public class UDPClientSide implements Runnable {
     private DatagramPacket response;
     private byte[] buffer;
     private int packetSize;
-    private static int Maxcount =Integer.parseInt(Configuration.getConfigurationValue("udpRetries")) ;
-    private static int timeout = Integer.parseInt(Configuration.getConfigurationValue("udpTimeout")) ;
+    private static int Maxcount = Integer.parseInt(Configuration.getConfigurationValue("udpRetries"));
+    private static int timeout = Integer.parseInt(Configuration.getConfigurationValue("udpTimeout"));
+
     public UDPClientSide(Peer peer) {
 
         String[] Peers = peer.getPeers();
@@ -36,7 +41,6 @@ public class UDPClientSide implements Runnable {
         buffer = new byte[peer.getBlockSize()];
         response = new DatagramPacket(buffer, buffer.length);
     }
-
 
 
     @Override
@@ -94,7 +98,7 @@ public class UDPClientSide implements Runnable {
                     }
                     try {
                         clientSocket.send(HandshakeReq);
-                        ClientListener listener = new ClientListener(peerAddress, OpeerPort,clientSocket,HandshakeReq);
+                        ClientListener listener = new ClientListener(peerAddress, OpeerPort, clientSocket, HandshakeReq);
                         Thread ListenThread = new Thread(listener);
                         ListenThread.start();
                     } catch (IOException e) {
@@ -117,12 +121,11 @@ class ClientListener implements Runnable {
     int port;
     DatagramPacket response;
     DatagramPacket handshakeRequest;
-    int Maxcount =Integer.parseInt(Configuration.getConfigurationValue("udpRetries")) ;
-    int timeout = Integer.parseInt(Configuration.getConfigurationValue("udpTimeout")) ;
+    int Maxcount = Integer.parseInt(Configuration.getConfigurationValue("udpRetries"));
+    int timeout = Integer.parseInt(Configuration.getConfigurationValue("udpTimeout"));
     boolean IfReceive = false;
 
-    public ClientListener(InetAddress address, int port, DatagramSocket socket, DatagramPacket hsRequest)
-    {
+    public ClientListener(InetAddress address, int port, DatagramSocket socket, DatagramPacket hsRequest) {
         clientSocket = socket;
         this.address = address;
         this.port = port;
@@ -138,14 +141,14 @@ class ClientListener implements Runnable {
             try {
                 this.clientSocket.receive(response);
                 this.IfReceive = true;
-                UDPProcessing handler = new UDPProcessing(response.getAddress(),response.getPort(),response.getData(), clientSocket);
+                UDPProcessing handler = new UDPProcessing(response.getAddress(), response.getPort(), response.getData(), clientSocket);
                 Thread handleThread = new Thread(handler);
                 handleThread.start();
                 byte[] zero = new byte[Integer.parseInt(Configuration.getConfigurationValue("blockSize"))];
                 response.setData(zero);
 
             } catch (SocketTimeoutException a) {
-                if(!IfReceive && count <= Maxcount) {
+                if (!IfReceive && count <= Maxcount) {
                     try {
                         clientSocket.send(handshakeRequest);
                         count++;
@@ -158,8 +161,7 @@ class ClientListener implements Runnable {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if(count>Maxcount)
-            {
+            if (count > Maxcount) {
                 System.out.println(address.toString() + port + "cannot be reached !!!");
                 this.clientSocket.close();
                 break;

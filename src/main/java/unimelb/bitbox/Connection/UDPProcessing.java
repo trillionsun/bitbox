@@ -1,9 +1,10 @@
-package unimelb.bitbox;
+package unimelb.bitbox.Connection;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
 import unimelb.bitbox.util.Configuration;
 
 import java.io.IOException;
@@ -20,12 +21,11 @@ public class UDPProcessing implements Runnable {
     byte[] buffer;
 
     // for receiving
-    DatagramPacket inputPacket;
-    DatagramPacket outputPacket = null;
+
     DatagramSocket hostingSocket;
 
     // for operation
-    DatagramPacket incomingPacket;
+
     InetAddress address;
     int port;
 

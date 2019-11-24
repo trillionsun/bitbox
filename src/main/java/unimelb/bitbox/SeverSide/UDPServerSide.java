@@ -1,4 +1,4 @@
-package unimelb.bitbox;
+package unimelb.bitbox.SeverSide;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -8,36 +8,28 @@ import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import unimelb.bitbox.Connection.UDPConnection;
+import unimelb.bitbox.Peer;
+import unimelb.bitbox.Connection.UDPProcessing;
 import unimelb.bitbox.util.Configuration;
 
-public class UDPServerSide implements Runnable {
+public class UDPServerSide extends serverTask implements Runnable {
     private int hostingPort;
     private int blockSize;
     private ArrayList<UDPConnection> UDPServerConnectionList = new ArrayList<>();
     private int maximumConnections;
-    ArrayList<String> ConnectedPeers;
+
     private boolean flag = true;
     private DatagramSocket serverSocket;
-    protected Thread runningThread = null;
+
     private byte[] buffer;
     private int packetSize;
     private DatagramPacket input;
     private int timeout = 10000;
-    private int maxRetry = 5;
 
     protected ExecutorService threadPool = Executors.newFixedThreadPool(10);
 
-    public int getHostingPort() {
-        return hostingPort;
-    }
 
-    public ArrayList<UDPConnection> getUDPServerConnectionList() {
-        return UDPServerConnectionList;
-    }
-
-    public int getMaximumConnections() {
-        return maximumConnections;
-    }
 
     public UDPServerSide(Peer peer) throws SocketException {
         hostingPort = peer.getPortNo();
@@ -57,6 +49,8 @@ public class UDPServerSide implements Runnable {
         System.out.println("Server listening for a connection on: " + hostingPort);
 
         while (flag) {
+
+
             try {
                 serverSocket.receive(input);
                 UDPProcessing handler = new UDPProcessing(input.getAddress(), input.getPort(), input.getData(),

@@ -1,17 +1,20 @@
-package unimelb.bitbox;
+package unimelb.bitbox.Connection;
 
 import org.json.simple.JSONObject;
+import unimelb.bitbox.Peer;
+import unimelb.bitbox.FileHandler.ServerMain;
+import unimelb.bitbox.ClientSide.UDPClientSide;
+import unimelb.bitbox.SeverSide.UDPServerSide;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
 public class UDPConnectionHost implements Runnable {
     Boolean flag = true;
-    private  static ArrayList<JSONObject> ConnectedPeers;
+    private static ArrayList<JSONObject> ConnectedPeers;
 
     public synchronized static ArrayList<UDPConnection> getServerConnectionList() {
         return ServerConnectionList;
@@ -34,7 +37,7 @@ public class UDPConnectionHost implements Runnable {
 
         for (UDPConnection connection : ConnectionMap.values()) {
             byte[] data = json.toJSONString().getBytes();
-            DatagramPacket packet = new DatagramPacket(data, data.length,connection.getAddress(),connection.getPort());
+            DatagramPacket packet = new DatagramPacket(data, data.length, connection.getAddress(), connection.getPort());
             connection.getDatagramSocket().send(packet);
         }
     }
@@ -103,7 +106,6 @@ public class UDPConnectionHost implements Runnable {
             e.printStackTrace();
         }
         clientThread.start();
-
 
     }
 
